@@ -1,0 +1,120 @@
+﻿@model List<AploadPaymentsAccruals.Models.FileDTO>
+@{
+    ViewBag.Title = "Main page";
+}
+
+<div>
+    <br />
+    Данные о файле: <input type="text" id="infoFile" /><br/><br/>
+    <input type="file" id="uploadFile" /><br/><br/>
+    <input type="button" id="btnUpload" value="Upload" onclick="RequestUpload()"/>
+</div>
+<br/>
+<div>
+    <h4>Файлы на сервере:</h4>
+    <hr align="center" width="80%" size="5" color="#ff0000" />
+    <div id="container">
+        <ul>
+            @foreach (var fileObj in Model)
+            {
+                <li><span>@fileObj.FileActualName@fileObj.FileExt</span> | <a href="#" uname="@fileObj.FileUniqueName" class="download">Скачать файл с сервера</a> | <a href="#" uname="@fileObj.FileUniqueName" class="remove">Удалить файл с сервера</a> | <a href="#" uname="@fileObj.FileUniqueName" class="uploadData">Загрузить в АИС Имущество</a></li>
+            }
+        </ul>
+    </div>
+    <hr align="center" width="80%" size="5" color="#ff0000" />
+</div>
+
+@section scripts{
+
+    <script type="text/javascript">
+    
+        $(document).ready(function () {
+            $(".download").click(function () {
+                var unqiuename = $(this).attr('uname');
+                var url = "http://10.1.48.68:80/uploadinmeta/api/FileApi/DownloadFile?uniqueName=" + unqiuename
+                // var url = "http://localhost:6141/api/FileApi/DownloadFile?uniqueName=" + unqiuename
+                window.open(url);
+            });            
+
+            $(".remove").click(function () {
+                var unqiuename = $(this).attr('uname');
+                var url = "http://10.1.48.68:80/uploadinmeta/api/FileApi/RemoveFile?uniqueName=" + unqiuename
+                window.open(url);
+            });
+            $(".uploadData").click(function () {
+                //var unqiuename = $(this).attr('uname');
+                //var url = "http://10.1.48.68:80/uploadinmeta/api/FileApi/uploadData?uniqueName=" + unqiuename
+                // var url = "http://localhost:6141/api/FileApi/uploadData?uniqueName=" + unqiuename
+                //window.open(url);
+                //-----------------------------------------------------------------------------------------------
+                var data = new FormData();
+                data.append("uname", $(this).attr('uname'));  //Other data
+                $.ajax({
+                    type: "POST",
+                    //url: "http://10.1.48.68:80/uploadinmeta/api/FileApi/uploadData",
+                     url: "http://localhost:6141/api/FileApi/uploadData",
+                    contentType: false,
+                    processData: false,
+                    data: data,
+                    success: function (response) {
+                        alert('Data upload');
+                        console.log(response);
+                    },
+                    error: function (result, status, er) {
+                        alert("error: " + result + " status: " + status + " er:" + er);
+                    }
+                });
+            });
+            //$("#btnUpload").click(function () {
+            //    var data = new FormData();
+            //    var files = $("#uploadFile").get(0).files;
+            //    // Add the uploaded image content to the form data collection
+            //    if (files.length > 0) {
+            //        data.append("UploadedFile", files[0]);
+            //    }
+            //    data.append("wayFile", $("#wayFile").val());  //Other data
+            //    var ajaxRequest = $.ajax({
+            //        type: "POST",
+            //        url: "http://localhost:6141/api/FileApi/UploadFile",
+            //        contentType: false,
+            //        processData: false,
+            //        data: data,
+            //        success: function (response) {
+            //            alert('File uploaded');
+            //            console.log(response);
+            //        },
+            //        error: function (result, status, er) {
+            //            alert("error: " + result + " status: " + status + " er:" + er);
+            //        }
+            //    });
+            //    return false;
+            //});
+        });
+
+        function RequestUpload(){
+            var data = new FormData();
+            var files = $("#uploadFile").get(0).files;
+            // Add the uploaded image content to the form data collection
+            if (files.length > 0) {
+                data.append("UploadedFile", files[0]);
+            }
+            data.append("infoFile", $("#infoFile").val());  //Other data
+            $.ajax({
+                type: "POST",
+                url: "http://10.1.48.68:80/uploadinmeta/api/FileApi/UploadFile",
+                // url: "http://localhost:6141/api/FileApi/UploadFile",
+                contentType: false,
+                processData: false,
+                data: data,
+                success: function (response) {
+                    alert('File uploaded');
+                    console.log(response);
+                },
+                error: function (result, status, er) {
+                    alert("error: " + result + " status: " + status + " er:" + er);
+                }
+            });
+        }
+
+    </script>
+}
