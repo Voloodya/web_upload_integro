@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Integro.InMeta.Runtime;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
 using System.Linq;
 using System.Web;
-using Integro.InMeta.Runtime;
+
 
 namespace AploadPaymentsAccruals.Models
 {
-    public class UploadPaymentsAccruals
+    public class UploadPaymentsAccruals : Integro.InMeta.Web.WebService
     {
         public string createNewRecording(string nameServer)
         {
@@ -19,14 +20,14 @@ namespace AploadPaymentsAccruals.Models
             DataApplication app;
             if (idAppCentralServer.Contains("EstateOrenburg"))
             {
-                //app = new DataApplication("estateorenburg", nameServer);
-                app = new DataApplication("estateorenburg", nameServer);
+                app = new DataApplication("estateorenburg");
             }
-            else {app = null; return "Create application failure";}
+            else { app = null; return "Create application failure"; }
 
             // Создание сессии (подключение к БД)
             DataSession session = app.CreateSession("AD\\lucenkovlse");
             //session.Db.BeginTransaction("","");
+
             // Прописываем свойства, которые нам необходимо прогрузить при первом запросе
             string loadPlan = "<Executor/>";
 
@@ -34,10 +35,14 @@ namespace AploadPaymentsAccruals.Models
 
             // Получение списка объектов
             DataObjectList rentApartContrProc;
-            if (session!=null)
+
+            //DataStorage dataStorage = Session["Constr/RentPrivatizationApartmentContractProcess"];
+            //rentApartContrProc = dataStorage.Query(loadPlan, "OID=?", "0009D8090EAE"); // 000859F5EC33
+
+            if (session != null)
             {
                 DataStorage dataStorage = session["Constr/RentPrivatizationApartmentContractProcess"];
-                rentApartContrProc = dataStorage.Query(loadPlan, "OID=?", "0009B470855A"); // 000859F5EC33
+                rentApartContrProc = dataStorage.Query(loadPlan, "OID=?", "0009D8090EAE"); // 000859F5EC33
             }
             else
             {
@@ -58,11 +63,11 @@ namespace AploadPaymentsAccruals.Models
                 //racp.SetDateTime("ContractDate", DateTime.Today);
 
                 // Добавлению нового дочернего объекта
-                Integro.InMeta.Runtime.DataObject accrualsPaymentsSocialContract = racp.GetChilds("Constr/AccrualsPaymentsSocialContract").AddNew();
-                Integro.InMeta.Runtime.DataObjectChildList employers = racp.GetChilds("Constr/Employers");
-                Integro.InMeta.Runtime.DataObject searchEmployer = null;
+                DataObject accrualsPaymentsSocialContract = racp.GetChilds("Constr/AccrualsPaymentsSocialContract").AddNew();
+                DataObjectChildList employers = racp.GetChilds("Constr/Employers");
+                DataObject searchEmployer = null;
 
-                foreach (Integro.InMeta.Runtime.DataObject employer in employers)
+                foreach (DataObject employer in employers)
                 {
                     if (employer.GetString("StatusSubject").Equals("Наниматель"))
                     {
@@ -79,16 +84,15 @@ namespace AploadPaymentsAccruals.Models
                 accrualsPaymentsSocialContract.SetString("IdAccrual", "123456");
                 accrualsPaymentsSocialContract.SetDateTime("DateAccrual", dateTime);
                 accrualsPaymentsSocialContract.SetDouble("Accrual", 2000);
-
             }
             //Сохранение объектов в БД
             session.Commit();
+            //Session.Commit();
             return "Upload successful";
         }
 
         public void searchAccruals()
         {
-
             DataApplication app = new DataApplication("estateorenburg");
 
             // Создание сессии (подключение к БД)
