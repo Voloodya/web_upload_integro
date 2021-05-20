@@ -9,7 +9,7 @@ using System.Web;
 
 namespace AploadPaymentsAccruals.Models
 {
-    public class UploadPaymentsAccruals : Integro.InMeta.Web.WebService
+    public class UploadPaymentsAccruals
     {
         public string createNewRecording(string nameServer)
         {
