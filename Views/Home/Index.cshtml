@@ -3,16 +3,45 @@
     ViewBag.Title = "Main page";
 }
 
+<head>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xls/0.7.6/xls.min.js"></script>
+    @*<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.10.8/xlsx.full.min.js"></script>*@
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
+</head>
+
 <div>
+    <h4>Загрузка начислений и платежей по соц. найму:</h4>
     <br />
-    Данные о файле: <input type="text" id="infoFile" /><br/><br/>
-    <input type="file" id="uploadFile" /><br/><br/>
-    <input type="button" id="btnUpload" value="Upload" onclick="RequestUpload()"/>
+    <input type="file" id="uploadFileSocRent" name="uploadFileSocRent" accept=".xls, .xlsx" /><br /><br />
+    <input type="button" id="btnUploadSocRent" value="Загрузить в имущество" onclick="UploadExcelToInmeta('uploadFileSocRent');" />
+    <input type="button" id="btnUploadSocRentOnServ" value="Загрузить файл на сервер" onclick="RequestUpload('uploadFileSocRent');" />
 </div>
-<br/>
+<br />
+<div>
+    <h4>Загрузка начислений и платежей по кап. ремонту:</h4>
+    <br />
+    <input type="file" id="uploadFileMajorRenovation" name="uploadFileMajorRenovation" accept=".xls, .xlsx" /><br /><br />
+    <input type="button" id="btnUploadMajorRenovation" value="Загрузить в имущество" onclick="UploadExcelToInmeta('uploadFileMajorRenovation');" />
+    <input type="button" id="btnUploadMajorRenovationOnServ" value="Загрузить файл на сервер" onclick="RequestUpload('uploadFileMajorRenovation');"/>
+</div>
+<br />
+<div>
+    <h4>Загрузка задолжностей по услугам ЖКХ:</h4>
+    <br />
+    <input type="file" id="uploadFileUJKX" name="uploadFileUJKX" accept=".xls, .xlsx" /><br /><br />
+    <input type="button" id="btnUploadUJKX" value="Загрузить в имущество" onclick="UploadExcelToInmeta('uploadFileUJKX');" />
+    <input type="button" id="btnUploadUJKXOnServ" value="Загрузить файл на сервер" onclick="RequestUpload('uploadFileUJKX');"/>
+</div>
+<br />
+
 <div>
     <h4>Файлы на сервере:</h4>
-    <hr align="center" width="80%" size="5" color="#ff0000" />
+    <hr align="center" width="80%" size="5" color="#ff0000"/>
     <div id="container">
         <ul>
             @foreach (var fileObj in Model)
@@ -23,41 +52,39 @@
     </div>
     <hr align="center" width="80%" size="5" color="#ff0000" />
 </div>
+<div id='my_file_output'></div>
 
 @section scripts{
 
     <script type="text/javascript">
-    
+
         $(document).ready(function () {
             $(".download").click(function () {
                 var unqiuename = $(this).attr('uname');
                 var url = "http://10.1.48.68:80/uploadinmeta/api/FileApi/DownloadFile?uniqueName=" + unqiuename
                 // var url = "http://localhost:6141/api/FileApi/DownloadFile?uniqueName=" + unqiuename
                 window.open(url);
-            });            
+            });
 
             $(".remove").click(function () {
                 var unqiuename = $(this).attr('uname');
                 var url = "http://10.1.48.68:80/uploadinmeta/api/FileApi/RemoveFile?uniqueName=" + unqiuename
                 window.open(url);
             });
-            $(".uploadData").click(function () {
-                //var unqiuename = $(this).attr('uname');
-                //var url = "http://10.1.48.68:80/uploadinmeta/api/FileApi/uploadData?uniqueName=" + unqiuename
-                // var url = "http://localhost:6141/api/FileApi/uploadData?uniqueName=" + unqiuename
-                //window.open(url);
-                //-----------------------------------------------------------------------------------------------
-                var data = new FormData();
-                data.append("uname", $(this).attr('uname'));  //Other data
+
+            $(".uploadData").click(async function () {
+                var data = await ExcelToJSON('AccrualsPaymentsSocialRent');
+                data = removePropertysJsonObjects(data, ["oIDobject", "personalAccount", "idAccrual", "period", "summAccrual", "summPayment"])
+                //data.append("uname", $(this).attr('uname'));  //Other data
                 $.ajax({
                     type: "POST",
                     //url: "http://10.1.48.68:80/uploadinmeta/api/FileApi/uploadData",
-                     url: "http://localhost:6141/api/FileApi/uploadData",
-                    contentType: false,
+                    url: "http://localhost:6141/api/FileApi/uploadData",
+                    contentType: "application/json;charset=utf-8",
                     processData: false,
-                    data: data,
+                    data: JSON.stringify(data),
                     success: function (response) {
-                        alert('Data upload');
+                        alert(response);
                         console.log(response);
                     },
                     error: function (result, status, er) {
@@ -65,6 +92,7 @@
                     }
                 });
             });
+
             //$("#btnUpload").click(function () {
             //    var data = new FormData();
             //    var files = $("#uploadFile").get(0).files;
@@ -89,20 +117,22 @@
             //    });
             //    return false;
             //});
+
         });
 
-        function RequestUpload(){
+        function RequestUpload(fileSource) {
             var data = new FormData();
-            var files = $("#uploadFile").get(0).files;
+            var files = $('#'+fileSource).get(0).files;
             // Add the uploaded image content to the form data collection
             if (files.length > 0) {
                 data.append("UploadedFile", files[0]);
             }
+
             data.append("infoFile", $("#infoFile").val());  //Other data
             $.ajax({
                 type: "POST",
-                url: "http://10.1.48.68:80/uploadinmeta/api/FileApi/UploadFile",
-                // url: "http://localhost:6141/api/FileApi/UploadFile",
+                // url: "http://10.1.48.68:80/uploadinmeta/api/FileApi/UploadFile",
+                url: "http://localhost:6141/api/FileApi/UploadFile",
                 contentType: false,
                 processData: false,
                 data: data,
@@ -114,6 +144,78 @@
                     alert("error: " + result + " status: " + status + " er:" + er);
                 }
             });
+        };
+
+        async function UploadExcelToInmeta(fileSource) {
+            var data = await ExcelToJSON('AccrualsPaymentsSocialRent', fileSource);
+            data = removePropertysJsonObjects(data, ["oIDobject", "personalAccount", "idAccrual", "dateAccrual", "summAccrual", "datePayment", "summPayment"])
+            //data.append("uname", $(this).attr('uname'));  //Other data
+            $.ajax({
+                type: "POST",
+                //url: "http://10.1.48.68:80/uploadinmeta/api/FileApi/uploadData",
+                url: "http://localhost:6141/api/FileApi/uploadData",
+                contentType: "application/json;charset=utf-8",
+                processData: false,
+                data: JSON.stringify(data),
+                success: function (response) {
+                    alert(response);
+                    console.log(response);
+                },
+                error: function (result, status, er) {
+                    alert("error: " + result + " status: " + status + " er:" + er);
+                }
+            });
+        }
+
+        //Функция конвертации загруженного файла в json
+        var ExcelToJSON = function (sheetNameRead, fileSource) {
+
+            // Get The File From The Input
+            var oFile = document.getElementById(fileSource).files[0];
+            //var oFile = oFileIn.target.files[0];
+            var sFilename = oFile.name;
+            // Create A File Reader HTML5
+            var reader = new FileReader();
+
+            var json_objects = [];
+            return new Promise(resolve => {
+                // Ready The Event For When A File Gets Selected
+                reader.onload = function (event) {
+                    var data = event.target.result;
+                    var cfb = XLSX.read(data, { type: 'binary' });
+                    // Loop Over Each Sheet
+                    cfb.SheetNames.forEach(function (sheetName) {
+
+                        if (sheetName == sheetNameRead) {
+                            // Obtain The Current Row As CSV
+                            var sCSV = XLS.utils.make_csv(cfb.Sheets[sheetName]);
+                            var json_object = XLS.utils.sheet_to_json(cfb.Sheets[sheetName]);
+
+                            json_objects.push(json_object);
+                        }
+                    });
+                    if (json_objects != undefined & json_objects.length > 0) {
+                        json_objects = json_objects[0];
+                    }
+                    resolve(json_objects);
+                };
+
+                // Tell JS To Start Reading The File.. You could delay this if desired
+                reader.readAsBinaryString(oFile);
+            });
+        }
+
+        //Удаление лишних полей из json-объектов
+        function removePropertysJsonObjects(jsonObjects, neededProperties) {
+
+            let result = jsonObjects.map(
+                item => Object.fromEntries(
+                    Object.entries(item).filter(
+                        ([key, value]) => neededProperties.includes(key)
+                    )
+                )
+            );
+            return result;
         }
 
     </script>

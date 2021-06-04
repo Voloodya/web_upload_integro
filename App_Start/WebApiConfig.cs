@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using System.Web.Http.Cors;
 
 namespace AploadPaymentsAccruals
 {
@@ -9,6 +10,11 @@ namespace AploadPaymentsAccruals
     {
         public static void Register(HttpConfiguration config)
         {
+
+            //Add (Microsoft.AspNet.WebApi.Cors)
+            var cors = new EnableCorsAttribute("*", "*", "*") {SupportsCredentials = true };
+            config.EnableCors(cors);
+
             // Конфигурация и службы веб-API
 
             // Маршруты веб-API

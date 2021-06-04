@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web;
+using System.Web.Helpers;
 using System.Web.Http;
 
 namespace AploadPaymentsAccruals.ApiControllers
@@ -140,23 +141,24 @@ namespace AploadPaymentsAccruals.ApiControllers
 
         [HttpPost]
         [Route("api/FileApi/uploadData")]
-        public void UploadData()
+        public void UploadData([FromBody] AccrualPayment [] accrualsPayments)
         {
-            HttpContext.Current.Response.AppendHeader("Access-Control-Allow-Origin", "*");
+            //HttpContext.Current.Response.AppendHeader("Access-Control-Allow-Origin", "*");
             //Physical Path of Root Folder
             string rootPath = System.Web.HttpContext.Current.Server.MapPath("~/UploadedFiles");
 
-            string fileName = HttpContext.Current.Request.Params.Get("uname");
+           // string fileName = HttpContext.Current.Request.Params.Get("uname");
 
             //Find File from DB against unique name
-            FileDTO fileDTO = FileModel.GetFileByUniqueID(fileName);
+            //FileDTO fileDTO = FileModel.GetFileByUniqueID(fileName);
 
+            
             UploadPaymentsAccruals uploadPaymentsAccruals = new UploadPaymentsAccruals();
 
             string answerUpload="";
-            if (fileDTO != null)
+            if (accrualsPayments.Length>0)
             {
-                answerUpload=uploadPaymentsAccruals.createNewRecording("localhost");
+                answerUpload = uploadPaymentsAccruals.createNewRecording("localhost", "AD\\lucenkovlse", accrualsPayments);
             }
             else
             {

@@ -29,7 +29,7 @@ namespace AploadPaymentsAccruals.Models
             return fileContentList;
         }
 
-        public static void writeFile(List<string[]> listWrite, string path, string nameFile, string typeFile)
+        public static void writeFile(List<string> listWrite, string path, string nameFile, string typeFile)
         {
             DirectoryInfo dirInfo = new DirectoryInfo(path);
             if (!dirInfo.Exists)
@@ -42,15 +42,9 @@ namespace AploadPaymentsAccruals.Models
                 StreamWriter writer = new StreamWriter(fileStream, Encoding.GetEncoding("Windows-1251"));
 
 
-                foreach (string[] valueColumns in listWrite)
+                foreach (string str in listWrite)
                 {
-                    string newStr = "";
-                    for (int i = 0; i < valueColumns.Length; i++)
-                    {
-                        newStr += valueColumns[i] + "|";
-                    }
-
-                    writer.WriteLine(newStr);
+                    writer.WriteLine(str);
                 }
                 writer.Close();
             }
